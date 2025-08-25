@@ -1,5 +1,4 @@
 import { z } from "zod"
-
 import { type Result, ok, err } from "./result"
 
 const Method = {
@@ -27,22 +26,13 @@ abstract class APIClientError extends Error {
   }
 }
 
-/**
- * A custom error for when an error is thrown by the `fetch` call.
- */
 class FetchAPIError extends APIClientError {
   apiClientErrorType = "FetchAPIError" as const
-  constructor(
-    message: string,
-    public readonly fetchError: Error,
-  ) {
+  constructor(message: string, public readonly fetchError: Error) {
     super(message)
   }
 }
 
-/**
- * A custom error for when a non-200 status code is returned by the API.
- */
 class ErrorResponseAPIError<B> extends APIClientError {
   apiClientErrorType = "ErrorResponseAPIError" as const
   constructor(
@@ -54,9 +44,6 @@ class ErrorResponseAPIError<B> extends APIClientError {
   }
 }
 
-/**
- * A custom error for when the response body cannot be parsed as JSON.
- */
 class ParseAPIError extends APIClientError {
   apiClientErrorType = "ParseAPIError" as const
   constructor(
@@ -68,9 +55,6 @@ class ParseAPIError extends APIClientError {
   }
 }
 
-/**
- * A custom error for when the response body does not match the expected schema.
- */
 class SchemaAPIError extends APIClientError {
   apiClientErrorType = "SchemaAPIError" as const
   constructor(
@@ -82,9 +66,6 @@ class SchemaAPIError extends APIClientError {
   }
 }
 
-/**
- * A custom error for when the request data is wrong.
- */
 class RequestDataError extends APIClientError {
   apiClientErrorType = "RequestDataError" as const
   constructor(message: string) {
@@ -126,18 +107,16 @@ async function makeApiCall<TParams, TResp, TErrResp, TBaseResp>(
   errorResponseSchema: z.ZodSchema<TErrResp>,
   requestContext: RequestContext,
   abortSignal?: AbortSignal,
+  fetchOptions?: RequestInit,   // 👈 NEW
 ): Promise<
   Result<APIResponse<TResp & TBaseResp>, APIError<TErrResp & TBaseResp>>
 > {
-  // Replace all path params (e.g. `users/{userId}/posts`) with the corresponding value
-  // from the params.
   path = path.replace(
     /\{([^}]+)\}/g,
     (_, paramName) => (params as any)[paramName] || "",
   )
 
   let body: string | FormData
-
   if (bodyContentType === BodyContentType.json) {
     body = JSON.stringify(params)
   } else if (bodyContentType === BodyContentType.multipart) {
@@ -156,9 +135,7 @@ async function makeApiCall<TParams, TResp, TErrResp, TBaseResp>(
       body.append(key, params[key] as string | Blob)
     }
   } else {
-    return err(
-      new RequestDataError(`Invalid body content type ${bodyContentType}`),
-    )
+    return err(new RequestDataError(`Invalid body content type ${bodyContentType}`))
   }
 
   let response: Response
@@ -166,24 +143,22 @@ async function makeApiCall<TParams, TResp, TErrResp, TBaseResp>(
     let headers = {
       ...requestContext.getHeaders(),
     }
-    // Note: Fetch will implicitly add the right content-type header for multipart form data body
-    // but if it's json, wrong content type is added, so for now adding it explicitly
     if (bodyContentType === BodyContentType.json) {
       headers["Content-Type"] = "application/json"
     }
+
     response = await fetch(`${baseUrl}${path}`, {
       method,
-      headers: headers,
-      credentials: "include",
+      headers,
       body: method !== Method.GET ? body : undefined,
       signal: abortSignal,
+      ...fetchOptions, // 👈 merge user-defined fetchOptions (credentials, etc.)
     })
   } catch (e) {
     const error = e as Error
-    return err(
-      new FetchAPIError(`Error making API call: ${error.message}`, error),
-    )
+    return err(new FetchAPIError(`Error making API call: ${error.message}`, error))
   }
+
   let bodyText: string
   try {
     bodyText = await response.text()
@@ -196,6 +171,7 @@ async function makeApiCall<TParams, TResp, TErrResp, TBaseResp>(
       ),
     )
   }
+
   let bodyJSON: unknown
   try {
     bodyJSON = JSON.parse(bodyText)
@@ -209,6 +185,7 @@ async function makeApiCall<TParams, TResp, TErrResp, TBaseResp>(
       ),
     )
   }
+
   if (!response.ok) {
     let parsedError: TErrResp & TBaseResp
     try {
@@ -226,14 +203,9 @@ async function makeApiCall<TParams, TResp, TErrResp, TBaseResp>(
       }
       throw error
     }
-    return err(
-      new ErrorResponseAPIError(
-        response.statusText,
-        response.status,
-        parsedError,
-      ),
-    )
+    return err(new ErrorResponseAPIError(response.statusText, response.status, parsedError))
   }
+
   let parsedBody: TResp & TBaseResp
   try {
     parsedBody = responseSchema.and(baseResponseSchema).parse(bodyJSON)
@@ -250,10 +222,8 @@ async function makeApiCall<TParams, TResp, TErrResp, TBaseResp>(
     }
     throw error
   }
-  return ok({
-    status: response.status,
-    body: parsedBody,
-  })
+
+  return ok({ status: response.status, body: parsedBody })
 }
 
 type GenericEndpointConfig = {
@@ -261,7 +231,7 @@ type GenericEndpointConfig = {
     method: Method
     path: string
     pathParamsSchema: z.AnyZodObject
-    requestSchema: z.AnyZodObject | z.ZodEffects<z.AnyZodObject> // Allow z.ZodEffects type as well to support zod methods like refine
+    requestSchema: z.AnyZodObject | z.ZodEffects<z.AnyZodObject>
     responseSchema: z.AnyZodObject
     errorResponseSchema: z.AnyZodObject
     bodyContentType?: BodyContentType
@@ -314,13 +284,16 @@ function createAPIClient<C extends GenericEndpointConfig, B>(opts: {
   baseResponseSchema: z.ZodSchema<B>
   endpointConfig: C
   requestContext?: RequestContext
+  fetchOptions?: RequestInit  // 👈 NEW
 }): APIClientInstance<C, B> {
   const {
     baseUrl,
     baseResponseSchema,
     endpointConfig,
     requestContext = new RequestContext(),
+    fetchOptions, // 👈 NEW
   } = opts
+
   return Object.fromEntries(
     Object.entries(endpointConfig).map(([endpt, config]) => {
       return [
@@ -342,6 +315,7 @@ function createAPIClient<C extends GenericEndpointConfig, B>(opts: {
             config.errorResponseSchema,
             requestContext,
             opts.abortSignal,
+            fetchOptions, // 👈 pass it down
           )
         },
       ]

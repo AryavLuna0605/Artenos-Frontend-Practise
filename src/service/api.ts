@@ -7,7 +7,7 @@ export {
   ErrorResponseAPIError,
 } from "../lib/apiclient"
 
-const API_BASE_URL = "https://localhost:3000/api"
+const API_BASE_URL = "http://localhost:3001/api"
 
 const AUTH_TOKEN_HEADER_NAME = "X-Auth-Token"
 
@@ -41,6 +41,9 @@ export default createAPIClient({
     message: z.string(),
   }),
   requestContext,
+  fetchOptions: {
+    credentials: "include",   // 👈 now supported correctly
+  },
   endpointConfig: {
     health: {
       method: "GET",
@@ -53,5 +56,42 @@ export default createAPIClient({
         message: z.string(),
       }),
     },
+    loginUser: {
+      method: "POST",
+      path: "/user/login",
+      pathParamsSchema: z.object({}),
+      requestSchema: z.object({
+        email: z.string(),
+        password: z.string(),
+      }),
+      responseSchema: z.object({
+        status: z.number(),
+        message: z.string(),
+        name: z.string(),
+        email: z.string(),
+      }),
+      errorResponseSchema: z.object({
+        status: z.number(),
+        message: z.string(),
+      }),
+    },
+    createProject: {
+      method: "POST",
+      path: "/project/create",
+      pathParamsSchema: z.object({}),
+      requestSchema: z.object({
+        name: z.string(),
+      }),
+      responseSchema: z.object({
+        status:z.number(),
+        message:z.string(),
+        name: z.string(),
+      }),
+      errorResponseSchema: z.object({
+        status: z.number(),
+        message: z.string(),
+      }),
+    }
+
   },
 })
