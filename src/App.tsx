@@ -1,5 +1,5 @@
 import { BrowserRouter } from "react-router-dom"
-import Form from "./components/Form"
+import { Toaster } from 'react-hot-toast';
 import AppRoutes from "./routes/AppRoutes"
 
 const App = () => {
@@ -7,6 +7,7 @@ const App = () => {
     <div>
       <BrowserRouter>
         <AppRoutes/>
+        <Toaster/>
       </BrowserRouter>
     </div>
   )

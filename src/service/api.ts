@@ -42,7 +42,7 @@ export default createAPIClient({
   }),
   requestContext,
   fetchOptions: {
-    credentials: "include", 
+    credentials: "include",
   },
   endpointConfig: {
     health: {
@@ -83,9 +83,49 @@ export default createAPIClient({
         name: z.string(),
       }),
       responseSchema: z.object({
-        status:z.number(),
+        status: z.number(),
+        message: z.string(),
+        projectDetails: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            created_by: z.string(),
+          })
+        ),
+      }),
+      errorResponseSchema: z.object({
+        status: z.number(),
+        message: z.string(),
+      }),
+    },
+    getProjects: {
+      method: "GET",
+      path: "/project",
+      pathParamsSchema: z.object({}),
+      requestSchema: z.object({}),
+      responseSchema: z.object({
+        projects: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            created_by: z.string(),
+          })
+        )
+      }),
+      errorResponseSchema: z.object({
+        status: z.number(),
+        message: z.string(),
+      }),
+    },
+    deleteProject: {
+      method: "DELETE",
+      path: "/project/{id}",
+      pathParamsSchema: z.object({
+        id:z.string(),
+      }),
+      requestSchema: z.object({}),
+      responseSchema: z.object({
         message:z.string(),
-        name: z.string(),
       }),
       errorResponseSchema: z.object({
         status: z.number(),
