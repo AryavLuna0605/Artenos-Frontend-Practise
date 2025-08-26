@@ -131,6 +131,25 @@ export default createAPIClient({
         status: z.number(),
         message: z.string(),
       }),
+    },
+    updateProjectName: {
+      method: "PATCH",
+      path: "/project/{id}",
+      pathParamsSchema: z.object({
+        id:z.string(),
+      }),
+      requestSchema: z.object({
+        name: z.string(),
+      }),
+      responseSchema: z.object({
+        id: z.string(),
+        name: z.string(),
+        created_by: z.string(),
+      }),
+      errorResponseSchema: z.object({
+        status: z.number(),
+        message: z.string(),
+      }),
     }
 
   },

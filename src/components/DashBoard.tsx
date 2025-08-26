@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAPICall } from '../hooks/apicall';
 import api from '../service/api';
 import { toast } from 'react-hot-toast';
@@ -20,10 +20,10 @@ const DashBoard = () => {
     async function handleSubmit(e: React.FormEvent){
         e.preventDefault();
         const response = await call({name: projectName})
-        console.log(response);
         
         if(response.ok){
             setProjects((prev)=>[...prev, ...response.value.body.projectDetails])
+            setProjectName("");
             toast.success("Project created successfully");
         }
         else{
@@ -42,7 +42,6 @@ const DashBoard = () => {
         }
         fetchProjects();
     },[])
-    console.log(projects);
     
   return (
     <div className="flex flex-col gap-2 items-start mt-10 h-[100vh]">
@@ -50,7 +49,7 @@ const DashBoard = () => {
             <div className="w-100">
                 <div className="flex flex-col " id='second-div'>
                     <label htmlFor="user-name">Project Name</label>
-                    <input onChange={(e)=> setProjectName(e.target.value)} className="border p-1.5" type="text" id='user-email'/>
+                    <input value={projectName} onChange={(e)=> setProjectName(e.target.value)} className="border p-1.5" type="text" id='user-email'/>
                 </div>
             </div>
             <input className="border px-4 py-1 rounded" type="submit" value={loading?"Creating...":"Create"}/>
@@ -58,7 +57,7 @@ const DashBoard = () => {
         <div className='flex flex-col w-full items-center'>
             {
                 projects.map((currProject)=>{
-                    return <Project setProjects = {setProjects} currProject={currProject} projects={projects}/>
+                    return <Project setProjects = {setProjects} currProject={currProject} projects={projects} />
                 })
             }
         </div>
