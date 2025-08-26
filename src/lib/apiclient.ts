@@ -107,7 +107,7 @@ async function makeApiCall<TParams, TResp, TErrResp, TBaseResp>(
   errorResponseSchema: z.ZodSchema<TErrResp>,
   requestContext: RequestContext,
   abortSignal?: AbortSignal,
-  fetchOptions?: RequestInit,   // 👈 NEW
+  fetchOptions?: RequestInit,   
 ): Promise<
   Result<APIResponse<TResp & TBaseResp>, APIError<TErrResp & TBaseResp>>
 > {
@@ -152,7 +152,7 @@ async function makeApiCall<TParams, TResp, TErrResp, TBaseResp>(
       headers,
       body: method !== Method.GET ? body : undefined,
       signal: abortSignal,
-      ...fetchOptions, // 👈 merge user-defined fetchOptions (credentials, etc.)
+      ...fetchOptions,
     })
   } catch (e) {
     const error = e as Error
@@ -284,14 +284,14 @@ function createAPIClient<C extends GenericEndpointConfig, B>(opts: {
   baseResponseSchema: z.ZodSchema<B>
   endpointConfig: C
   requestContext?: RequestContext
-  fetchOptions?: RequestInit  // 👈 NEW
+  fetchOptions?: RequestInit 
 }): APIClientInstance<C, B> {
   const {
     baseUrl,
     baseResponseSchema,
     endpointConfig,
     requestContext = new RequestContext(),
-    fetchOptions, // 👈 NEW
+    fetchOptions, 
   } = opts
 
   return Object.fromEntries(
@@ -315,7 +315,7 @@ function createAPIClient<C extends GenericEndpointConfig, B>(opts: {
             config.errorResponseSchema,
             requestContext,
             opts.abortSignal,
-            fetchOptions, // 👈 pass it down
+            fetchOptions,
           )
         },
       ]

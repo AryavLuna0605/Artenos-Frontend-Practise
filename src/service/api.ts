@@ -42,7 +42,7 @@ export default createAPIClient({
   }),
   requestContext,
   fetchOptions: {
-    credentials: "include",   // 👈 now supported correctly
+    credentials: "include", 
   },
   endpointConfig: {
     health: {
