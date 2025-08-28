@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 
-import { Result, ok, err, wrap, wrapAsync, unwrap } from "../lib/result"
+import { type Result, ok, err, wrap, wrapAsync, unwrap } from "../lib/result"
 
 export { type Result, ok, err, wrap, wrapAsync, unwrap }
 

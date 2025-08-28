@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import type { ProjectType } from './DashBoard';
 import React, { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
+import { FaSpinner } from "react-icons/fa";
 
 type ProjectProps = {
   currProject: ProjectType;
@@ -13,7 +14,7 @@ type ProjectProps = {
 };
 
 const Project: React.FC<ProjectProps> = ({ currProject, projects, setProjects }) => {
-  const { loading, result, call } = useAPICall(api.deleteProject);
+  const { loading, call } = useAPICall(api.deleteProject);
   const { call: updateProjectName } = useAPICall(api.updateProjectName);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -29,6 +30,8 @@ const Project: React.FC<ProjectProps> = ({ currProject, projects, setProjects })
       setProjects(updatedProjects);
       toast.success('Project Deleted Successfully');
     } else {
+        console.log(response);
+        
       toast.error(response.error.message);
     }
   }
@@ -77,7 +80,7 @@ const Project: React.FC<ProjectProps> = ({ currProject, projects, setProjects })
       <div className='flex gap-4'>
         <FaEdit onClick={handleEdit} className='cursor-pointer' />
         {isEditing && <FaSave onClick={handleSave} className='cursor-pointer' />}
-        <FaTrash onClick={handleDelete} className='cursor-pointer' />
+        {loading?<FaSpinner/>:<FaTrash onClick={handleDelete} className='cursor-pointer' />}
       </div>
     </div>
   );
